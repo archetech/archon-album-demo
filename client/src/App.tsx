@@ -266,8 +266,8 @@ function Home() {
                 {auth?.authenticated ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {auth.fan?.accessLevel === 'vip' ? (
-                            <Typography variant="body2" sx={{ color: '#c45c3a' }}>
-                                ⭐ VIP {auth.fan?.archonHandle && `(${auth.fan.archonHandle})`}
+                            <Typography variant="body2" sx={{ color: '#c45c3a', fontWeight: 600 }}>
+                                ⭐ {auth.fan?.archonHandle}@archon.social — VIP Member
                             </Typography>
                         ) : (
                             <Typography variant="body2" sx={{ color: '#22c55e' }}>
@@ -291,6 +291,47 @@ function Home() {
                     </Button>
                 )}
             </Box>
+
+            {/* VIP Upgrade Banner for non-VIP authenticated users */}
+            {auth?.authenticated && auth.fan?.accessLevel !== 'vip' && (
+                <Box sx={{ 
+                    maxWidth: 800, 
+                    mx: 'auto', 
+                    mb: 3, 
+                    p: 2, 
+                    backgroundColor: 'rgba(196,92,58,0.1)', 
+                    borderRadius: 2,
+                    border: '1px solid rgba(196,92,58,0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 2,
+                }}>
+                    <Box>
+                        <Typography variant="body2" sx={{ color: '#f5f0e8', fontWeight: 600 }}>
+                            ⭐ Upgrade to VIP
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#a89a88' }}>
+                            Register your @name on archon.social to get VIP status and your handle in your credential!
+                        </Typography>
+                    </Box>
+                    <Button 
+                        variant="outlined" 
+                        size="small"
+                        href="https://archon.social"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ 
+                            borderColor: '#c45c3a', 
+                            color: '#c45c3a', 
+                            '&:hover': { borderColor: '#d4664a', bgcolor: 'rgba(196,92,58,0.1)' } 
+                        }}
+                    >
+                        Claim @name →
+                    </Button>
+                </Box>
+            )}
 
             {/* Album Card */}
             <Card sx={{ maxWidth: 800, mx: 'auto', mb: 4, bgcolor: '#1a1a1a', border: '1px solid #333' }}>
