@@ -34,7 +34,7 @@ import {
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
-import LockIcon from '@mui/icons-material/Lock';
+// LockIcon removed - previews now playable for everyone
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import CloseIcon from '@mui/icons-material/Close';
@@ -145,6 +145,7 @@ interface StickyPlayerProps {
     isPlaying: boolean;
     currentTime: number;
     duration: number;
+    isPreview?: boolean;
     onPlayPause: () => void;
     onSeek: (time: number) => void;
     onClose: () => void;
@@ -152,11 +153,24 @@ interface StickyPlayerProps {
     onPrev: () => void;
 }
 
-function StickyPlayer({ track, isPlaying, currentTime, duration, onPlayPause, onSeek, onClose, onNext, onPrev }: StickyPlayerProps) {
+function StickyPlayer({ track, isPlaying, currentTime, duration, isPreview, onPlayPause, onSeek, onClose, onNext, onPrev }: StickyPlayerProps) {
     return (
         <div className="sticky-player">
             <div className="sticky-player-content">
                 <div className="sticky-player-info">
+                    {isPreview && (
+                        <span style={{ 
+                            backgroundColor: '#c45c3a', 
+                            color: '#fff', 
+                            fontSize: '0.65rem', 
+                            padding: '2px 6px', 
+                            borderRadius: '4px',
+                            marginRight: '8px',
+                            fontWeight: 600,
+                        }}>
+                            PREVIEW
+                        </span>
+                    )}
                     <div className="sticky-player-title">{track.number}. {track.title}</div>
                     <div className="sticky-player-duration">{track.duration}</div>
                 </div>
@@ -229,29 +243,28 @@ function Home() {
         init();
     }, []);
 
-    const handlePlayTrack = (trackNum: number) => {
-        if (!auth?.authenticated) {
-            // Public: can only preview
-            navigate('/login');
-            return;
-        }
+    const [isPreview, setIsPreview] = useState(false);
 
+    const handlePlayTrack = (trackNum: number) => {
         if (currentTrack === trackNum && isPlaying) {
             audioRef.current?.pause();
             setIsPlaying(false);
         } else {
             setCurrentTrack(trackNum);
             setIsPlaying(true);
+            setIsPreview(!auth?.authenticated);
             // Audio element will auto-play via useEffect
         }
     };
 
     useEffect(() => {
         if (audioRef.current && currentTrack && isPlaying) {
-            audioRef.current.src = `/api/stream/${currentTrack}`;
+            // Use preview endpoint for non-authenticated users, full stream for authenticated
+            const endpoint = auth?.authenticated ? `/api/stream/${currentTrack}` : `/api/preview/${currentTrack}`;
+            audioRef.current.src = endpoint;
             audioRef.current.play().catch(console.error);
         }
-    }, [currentTrack, isPlaying]);
+    }, [currentTrack, isPlaying, auth?.authenticated]);
 
     if (!metadata) {
         return <LoadingShell title="Album" />;
@@ -376,7 +389,7 @@ function Home() {
                 
                 {!auth?.authenticated && (
                     <Alert severity="info" sx={{ mb: 2, bgcolor: 'rgba(196,92,58,0.15)', color: '#f5f5f5', border: '1px solid rgba(196,92,58,0.3)' }}>
-                        🎵 Sign in with your DID to stream full tracks and receive a Fan Credential
+                        🎵 15-second previews available! Sign in with your DID to stream full tracks and receive a Fan Credential.
                     </Alert>
                 )}
 
@@ -388,19 +401,15 @@ function Home() {
                                 sx={{ '&:hover': { bgcolor: 'rgba(196,92,58,0.1)' } }}
                             >
                                 <ListItemIcon sx={{ minWidth: 40 }}>
-                                    {auth?.authenticated ? (
-                                        currentTrack === track.number && isPlaying ? (
-                                            <PauseIcon sx={{ color: '#c45c3a' }} />
-                                        ) : (
-                                            <PlayArrowIcon sx={{ color: '#888' }} />
-                                        )
+                                    {currentTrack === track.number && isPlaying ? (
+                                        <PauseIcon sx={{ color: '#c45c3a' }} />
                                     ) : (
-                                        <LockIcon sx={{ color: '#555' }} />
+                                        <PlayArrowIcon sx={{ color: auth?.authenticated ? '#888' : '#c45c3a' }} />
                                     )}
                                 </ListItemIcon>
                                 <ListItemText
                                     primary={`${track.number}. ${track.title}`}
-                                    secondary={track.duration}
+                                    secondary={auth?.authenticated ? track.duration : `${track.duration} • 15s preview`}
                                     primaryTypographyProps={{
                                         fontWeight: currentTrack === track.number ? 600 : 400,
                                         color: currentTrack === track.number ? '#c45c3a' : '#f5f5f5',
@@ -459,6 +468,7 @@ function Home() {
                     isPlaying={isPlaying}
                     currentTime={currentTime}
                     duration={duration}
+                    isPreview={isPreview}
                     onPlayPause={() => {
                         if (isPlaying) {
                             audioRef.current?.pause();
@@ -501,11 +511,13 @@ function Home() {
                 onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
                 onEnded={() => {
                     setIsPlaying(false);
-                    // Auto-advance to next track
-                    if (currentTrack && currentTrack < tracks.length) {
+                    // Auto-advance only for authenticated users (full tracks)
+                    if (auth?.authenticated && currentTrack && currentTrack < tracks.length) {
                         setCurrentTrack(currentTrack + 1);
                         setIsPlaying(true);
+                        setIsPreview(false);
                     }
+                    // For previews, just stop (user can click next or sign in)
                 }}
             />
         </div>
