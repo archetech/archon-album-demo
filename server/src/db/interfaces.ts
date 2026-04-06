@@ -17,6 +17,9 @@ export interface Fan {
   // Archon.social handle (e.g., "@flaxscrip") — grants VIP status
   archonHandle?: string;
   
+  // When the user was upgraded to VIP
+  upgradedAt?: string;
+  
   // Optional display name
   name?: string;
 }

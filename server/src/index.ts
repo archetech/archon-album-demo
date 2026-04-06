@@ -328,6 +328,28 @@ async function issueFanCredential(fanDid: string, archonName?: string | null): P
   return credentialDid;
 }
 
+async function upgradeCredentialToVip(credentialDid: string, fanDid: string, archonName: string): Promise<boolean> {
+  await keymaster.setCurrentId(ALBUM_NAME);
+  
+  // Get existing credential
+  const existingCredential = await keymaster.getCredential(credentialDid);
+  if (!existingCredential) {
+    console.error(`Could not fetch credential ${credentialDid} for upgrade`);
+    return false;
+  }
+  
+  // Update the claims
+  existingCredential.credentialSubject.accessLevel = 'vip';
+  existingCredential.credentialSubject.archonHandle = `@${archonName}`;
+  existingCredential.credentialSubject.upgradedAt = new Date().toISOString();
+  
+  // Update credential (maintains version history)
+  const updated = await keymaster.updateCredential(credentialDid, existingCredential);
+  console.log(`Upgraded credential ${credentialDid} to VIP for ${fanDid} (@${archonName})`);
+  
+  return updated;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // API Routes: Public
 // ─────────────────────────────────────────────────────────────────────────────
@@ -430,23 +452,39 @@ app.get('/api/auth/callback', async (req, res) => {
     if (verify.match) {
       req.session.user = { did: verify.responder };
       
-      // Check if fan needs credential
+      // Check if fan needs credential or upgrade
       const fan = await db.getFan(verify.responder);
-      if (fan && !fan.credentialDid) {
+      if (fan) {
         try {
           // Lookup archon.social name for VIP status
           const archonName = await lookupArchonName(verify.responder);
-          if (archonName) {
-            fan.archonHandle = `@${archonName}`;
-            fan.accessLevel = 'vip';
-          }
           
-          const credDid = await issueFanCredential(verify.responder, archonName);
-          fan.credentialDid = credDid;
-          fan.credentialIssuedAt = new Date().toISOString();
-          await db.setFan(verify.responder, fan);
+          const needsCredential = !fan.credentialDid;
+          const needsUpgrade = archonName && fan.accessLevel !== 'vip' && fan.credentialDid;
+          
+          if (needsCredential) {
+            // First-time credential issuance
+            if (archonName) {
+              fan.archonHandle = `@${archonName}`;
+              fan.accessLevel = 'vip';
+            }
+            
+            const credDid = await issueFanCredential(verify.responder, archonName);
+            fan.credentialDid = credDid;
+            fan.credentialIssuedAt = new Date().toISOString();
+            await db.setFan(verify.responder, fan);
+          } else if (needsUpgrade) {
+            // Upgrade existing credential to VIP (maintains version history)
+            const upgraded = await upgradeCredentialToVip(fan.credentialDid!, verify.responder, archonName!);
+            if (upgraded) {
+              fan.archonHandle = `@${archonName}`;
+              fan.accessLevel = 'vip';
+              fan.upgradedAt = new Date().toISOString();
+              await db.setFan(verify.responder, fan);
+            }
+          }
         } catch (err) {
-          console.error('Failed to issue credential:', err);
+          console.error('Failed to issue/upgrade credential:', err);
         }
       }
       
@@ -475,23 +513,39 @@ app.post('/api/auth/callback', async (req, res) => {
     if (verify.match) {
       req.session.user = { did: verify.responder };
       
-      // Check if fan needs credential
+      // Check if fan needs credential or upgrade
       const fan = await db.getFan(verify.responder);
-      if (fan && !fan.credentialDid) {
+      if (fan) {
         try {
           // Lookup archon.social name for VIP status
           const archonName = await lookupArchonName(verify.responder);
-          if (archonName) {
-            fan.archonHandle = `@${archonName}`;
-            fan.accessLevel = 'vip';
-          }
           
-          const credDid = await issueFanCredential(verify.responder, archonName);
-          fan.credentialDid = credDid;
-          fan.credentialIssuedAt = new Date().toISOString();
-          await db.setFan(verify.responder, fan);
+          const needsCredential = !fan.credentialDid;
+          const needsUpgrade = archonName && fan.accessLevel !== 'vip' && fan.credentialDid;
+          
+          if (needsCredential) {
+            // First-time credential issuance
+            if (archonName) {
+              fan.archonHandle = `@${archonName}`;
+              fan.accessLevel = 'vip';
+            }
+            
+            const credDid = await issueFanCredential(verify.responder, archonName);
+            fan.credentialDid = credDid;
+            fan.credentialIssuedAt = new Date().toISOString();
+            await db.setFan(verify.responder, fan);
+          } else if (needsUpgrade) {
+            // Upgrade existing credential to VIP (maintains version history)
+            const upgraded = await upgradeCredentialToVip(fan.credentialDid!, verify.responder, archonName!);
+            if (upgraded) {
+              fan.archonHandle = `@${archonName}`;
+              fan.accessLevel = 'vip';
+              fan.upgradedAt = new Date().toISOString();
+              await db.setFan(verify.responder, fan);
+            }
+          }
         } catch (err) {
-          console.error('Failed to issue credential:', err);
+          console.error('Failed to issue/upgrade credential:', err);
         }
       }
       
