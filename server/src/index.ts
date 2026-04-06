@@ -333,15 +333,16 @@ async function upgradeCredentialToVip(credentialDid: string, fanDid: string, arc
   
   // Get existing credential
   const existingCredential = await keymaster.getCredential(credentialDid);
-  if (!existingCredential) {
+  if (!existingCredential || !existingCredential.credentialSubject) {
     console.error(`Could not fetch credential ${credentialDid} for upgrade`);
     return false;
   }
   
   // Update the claims
-  existingCredential.credentialSubject.accessLevel = 'vip';
-  existingCredential.credentialSubject.archonHandle = `@${archonName}`;
-  existingCredential.credentialSubject.upgradedAt = new Date().toISOString();
+  const subject = existingCredential.credentialSubject as Record<string, any>;
+  subject.accessLevel = 'vip';
+  subject.archonHandle = `@${archonName}`;
+  subject.upgradedAt = new Date().toISOString();
   
   // Update credential (maintains version history)
   const updated = await keymaster.updateCredential(credentialDid, existingCredential);
