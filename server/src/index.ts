@@ -34,7 +34,7 @@ import { DbJson } from './db/json.js';
 
 dotenv.config();
 
-const PORT = Number(process.env.PORT) || 4260;
+const PORT = Number(process.env.PORT) || 4265;
 const GATEKEEPER_URL = process.env.ARCHON_GATEKEEPER_URL || 'http://localhost:4224';
 const WALLET_URL = process.env.ARCHON_WALLET_URL || 'https://wallet.archon.technology';
 const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
