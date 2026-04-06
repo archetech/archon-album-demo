@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  album-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SESSION_SECRET=${SESSION_SECRET}
+      - ARCHON_GATEKEEPER_URL=${ARCHON_GATEKEEPER_URL:-https://gatekeeper.archon.technology}
+      - ALBUM_AGENT_NAME=${ALBUM_AGENT_NAME}
+      - ARCHON_PASSPHRASE=${ARCHON_PASSPHRASE}
+      - ALBUM_CID=${ALBUM_CID:-bafybeic4g2adodxjbpwp3nf5bnpry7bdzrzo5m7jmyfeddzmcb3h66y564}
+      - IPFS_GATEWAY=${IPFS_GATEWAY:-https://dweb.link}
+    volumes:
+      - ./wallet:/app/wallet
+    restart: unless-stopped

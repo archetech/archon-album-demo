@@ -1,0 +1,188 @@
+/* Album Archon - Warm Parchment Theme */
+
+:root {
+  --bg-primary: #12100d;
+  --bg-secondary: #1a1611;
+  --bg-card: #241f19;
+  --bg-hover: #2e271f;
+  --text-primary: #f5f0e8;
+  --text-secondary: #a89a88;
+  --accent: #c45c3a;
+  --accent-hover: #d4664a;
+  --accent-muted: rgba(196, 92, 58, 0.15);
+  --success: #7fb069;
+  --border: #3d352a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+.App {
+  min-height: 100vh;
+  padding: 2rem;
+  padding-bottom: 120px; /* Space for sticky player */
+  background: linear-gradient(180deg, #1f1a14 0%, #12100d 100%);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--accent-hover);
+}
+
+/* Override MUI for warm theme */
+.MuiCard-root {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+.MuiTypography-root {
+  color: inherit;
+}
+
+.MuiTypography-colorTextSecondary {
+  color: var(--text-secondary) !important;
+}
+
+.MuiList-root {
+  background-color: var(--bg-secondary) !important;
+}
+
+.MuiListItemButton-root:hover {
+  background-color: var(--accent-muted) !important;
+}
+
+.MuiButton-contained {
+  background-color: var(--accent) !important;
+}
+
+.MuiButton-contained:hover {
+  background-color: var(--accent-hover) !important;
+}
+
+.MuiButton-outlined {
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+.MuiButton-outlined:hover {
+  border-color: var(--accent) !important;
+  background-color: var(--accent-muted) !important;
+}
+
+.MuiAlert-standardInfo {
+  background-color: var(--accent-muted) !important;
+  color: var(--text-primary) !important;
+}
+
+.MuiDialog-paper {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+.MuiDialogContent-root {
+  color: var(--text-primary) !important;
+}
+
+.MuiCircularProgress-root {
+  color: var(--accent) !important;
+}
+
+/* Sticky Player */
+.sticky-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(31, 26, 20, 0.95) 0%, rgba(18, 16, 13, 0.98) 100%);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  padding: 1rem 2rem;
+  z-index: 1000;
+}
+
+.sticky-player-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sticky-player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sticky-player-title {
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+
+.sticky-player-duration {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.sticky-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sticky-player-progress {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sticky-player-progress input[type="range"] {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.sticky-player-progress input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sticky-player-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  min-width: 40px;
+}
+
+/* QR Code container */
+.qr-container {
+  background: #f5f0e8;
+  padding: 1rem;
+  border-radius: 8px;
+  display: inline-block;
+}
