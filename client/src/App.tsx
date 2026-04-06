@@ -61,6 +61,7 @@ interface AuthState {
         logins?: number;
         credentialDid?: string;
         accessLevel?: string;
+        archonHandle?: string;
     };
 }
 
@@ -264,9 +265,15 @@ function Home() {
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, maxWidth: 800, mx: 'auto' }}>
                 {auth?.authenticated ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant="body2" sx={{ color: '#22c55e' }}>
-                            ✓ Fan Member
-                        </Typography>
+                        {auth.fan?.accessLevel === 'vip' ? (
+                            <Typography variant="body2" sx={{ color: '#c45c3a' }}>
+                                ⭐ VIP {auth.fan?.archonHandle && `(${auth.fan.archonHandle})`}
+                            </Typography>
+                        ) : (
+                            <Typography variant="body2" sx={{ color: '#22c55e' }}>
+                                ✓ Fan Member
+                            </Typography>
+                        )}
                         <Button size="small" component={Link} to="/credential" sx={{ color: '#c45c3a' }}>
                             My Credential
                         </Button>
@@ -647,23 +654,36 @@ function ViewCredential() {
                     </Alert>
                 ) : (
                     <Box>
-                        <Box sx={{
-                            backgroundColor: 'rgba(127, 176, 105, 0.15)',
-                            borderRadius: 2,
-                            p: 3,
-                            mb: 3,
-                            textAlign: 'center',
-                            border: '1px solid rgba(127, 176, 105, 0.3)',
-                        }}>
-                            <Typography variant="h5" sx={{ color: '#7fb069', mb: 1 }}>
-                                ✓ Verified Fan
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#a89a88' }}>
-                                Issued: {credentialData.credentialIssuedAt
-                                    ? format(new Date(credentialData.credentialIssuedAt), 'MMM d, yyyy')
-                                    : 'Unknown'}
-                            </Typography>
-                        </Box>
+                        {(() => {
+                            const accessLevel = credentialData.credential?.credentialSubject?.accessLevel || 'fan';
+                            const archonHandle = credentialData.credential?.credentialSubject?.archonHandle;
+                            const isVip = accessLevel === 'vip';
+                            
+                            return (
+                                <Box sx={{
+                                    backgroundColor: isVip ? 'rgba(196, 92, 58, 0.15)' : 'rgba(127, 176, 105, 0.15)',
+                                    borderRadius: 2,
+                                    p: 3,
+                                    mb: 3,
+                                    textAlign: 'center',
+                                    border: isVip ? '1px solid rgba(196, 92, 58, 0.3)' : '1px solid rgba(127, 176, 105, 0.3)',
+                                }}>
+                                    <Typography variant="h5" sx={{ color: isVip ? '#c45c3a' : '#7fb069', mb: 1 }}>
+                                        {isVip ? '⭐ Verified VIP' : '✓ Verified Fan'}
+                                    </Typography>
+                                    {archonHandle && (
+                                        <Typography variant="h6" sx={{ color: '#f5f0e8', mb: 1 }}>
+                                            {archonHandle}@archon.social
+                                        </Typography>
+                                    )}
+                                    <Typography variant="body2" sx={{ color: '#a89a88' }}>
+                                        Issued: {credentialData.credentialIssuedAt
+                                            ? format(new Date(credentialData.credentialIssuedAt), 'MMM d, yyyy')
+                                            : 'Unknown'}
+                                    </Typography>
+                                </Box>
+                            );
+                        })()}
 
                         <Typography variant="h6" sx={{ mb: 1, color: '#f5f0e8' }}>Credential DID</Typography>
                         <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', mb: 3, color: '#c45c3a' }}>
@@ -676,6 +696,33 @@ function ViewCredential() {
                                 {JSON.stringify(credentialData.credential, null, 2)}
                             </pre>
                         </Box>
+
+                        {/* VIP upgrade tip for non-VIP users */}
+                        {credentialData.credential?.credentialSubject?.accessLevel !== 'vip' && (
+                            <Box sx={{ 
+                                mt: 3, 
+                                p: 2, 
+                                backgroundColor: 'rgba(196,92,58,0.1)', 
+                                borderRadius: 2,
+                                border: '1px solid rgba(196,92,58,0.2)',
+                            }}>
+                                <Typography variant="body2" sx={{ color: '#f5f0e8', mb: 1 }}>
+                                    ⭐ <strong>Upgrade to VIP</strong>
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: '#a89a88' }}>
+                                    Claim your @name on{' '}
+                                    <a 
+                                        href="https://archon.social" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        style={{ color: '#c45c3a' }}
+                                    >
+                                        archon.social
+                                    </a>
+                                    {' '}and log in again to get VIP status with your handle in your credential.
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
                 )}
 

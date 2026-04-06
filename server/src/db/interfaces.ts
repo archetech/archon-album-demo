@@ -11,8 +11,11 @@ export interface Fan {
   credentialDid?: string;
   credentialIssuedAt?: string;
   
-  // Access level: 'fan' | 'contributor' | 'rights-holder'
+  // Access level: 'fan' | 'vip' | 'contributor' | 'rights-holder'
   accessLevel?: string;
+  
+  // Archon.social handle (e.g., "@flaxscrip") — grants VIP status
+  archonHandle?: string;
   
   // Optional display name
   name?: string;

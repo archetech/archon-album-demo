@@ -247,24 +247,57 @@ function isOwner(req: Request, res: Response, next: NextFunction): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Archon.social Name Lookup
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ARCHON_SOCIAL_API = process.env.ARCHON_SOCIAL_API || 'https://archon.social/names/api';
+
+interface ArchonProfile {
+  name?: string;
+  did: string;
+}
+
+async function lookupArchonName(did: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${ARCHON_SOCIAL_API}/profile/${did}`);
+    if (!response.ok) return null;
+    
+    const profile: ArchonProfile = await response.json();
+    return profile.name || null;
+  } catch (error) {
+    console.log(`Could not lookup archon.social name for ${did}:`, error);
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Credential Issuance
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function issueFanCredential(fanDid: string): Promise<string> {
+async function issueFanCredential(fanDid: string, archonName?: string | null): Promise<string> {
   await keymaster.setCurrentId(ALBUM_NAME);
+  
+  const isVip = !!archonName;
+  const accessLevel = isVip ? 'vip' : 'fan';
+  
+  const claims: Record<string, any> = {
+    album: ALBUM_TITLE,
+    albumDid: albumDID,
+    memberSince: new Date().toISOString(),
+    accessLevel,
+  };
+  
+  if (archonName) {
+    claims.archonHandle = `@${archonName}`;
+  }
   
   const credential = await keymaster.bindCredential(fanDid, {
     validFrom: new Date().toISOString(),
-    claims: {
-      album: ALBUM_TITLE,
-      albumDid: albumDID,
-      memberSince: new Date().toISOString(),
-      accessLevel: 'fan',
-    }
+    claims,
   });
   
   const credentialDid = await keymaster.issueCredential(credential);
-  console.log(`Issued fan credential ${credentialDid} for ${fanDid}`);
+  console.log(`Issued ${accessLevel} credential ${credentialDid} for ${fanDid}${archonName ? ` (@${archonName})` : ''}`);
   
   return credentialDid;
 }
@@ -375,7 +408,14 @@ app.get('/api/auth/callback', async (req, res) => {
       const fan = await db.getFan(verify.responder);
       if (fan && !fan.credentialDid) {
         try {
-          const credDid = await issueFanCredential(verify.responder);
+          // Lookup archon.social name for VIP status
+          const archonName = await lookupArchonName(verify.responder);
+          if (archonName) {
+            fan.archonHandle = `@${archonName}`;
+            fan.accessLevel = 'vip';
+          }
+          
+          const credDid = await issueFanCredential(verify.responder, archonName);
           fan.credentialDid = credDid;
           fan.credentialIssuedAt = new Date().toISOString();
           await db.setFan(verify.responder, fan);
@@ -413,7 +453,14 @@ app.post('/api/auth/callback', async (req, res) => {
       const fan = await db.getFan(verify.responder);
       if (fan && !fan.credentialDid) {
         try {
-          const credDid = await issueFanCredential(verify.responder);
+          // Lookup archon.social name for VIP status
+          const archonName = await lookupArchonName(verify.responder);
+          if (archonName) {
+            fan.archonHandle = `@${archonName}`;
+            fan.accessLevel = 'vip';
+          }
+          
+          const credDid = await issueFanCredential(verify.responder, archonName);
           fan.credentialDid = credDid;
           fan.credentialIssuedAt = new Date().toISOString();
           await db.setFan(verify.responder, fan);
