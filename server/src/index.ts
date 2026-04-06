@@ -250,20 +250,46 @@ function isOwner(req: Request, res: Response, next: NextFunction): void {
 // Archon.social Name Lookup
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ARCHON_SOCIAL_API = process.env.ARCHON_SOCIAL_API || 'https://archon.social/names/api';
+const ARCHON_SOCIAL_API = process.env.ARCHON_SOCIAL_API || 'https://archon.social/api';
 
-interface ArchonProfile {
-  name?: string;
-  did: string;
+interface ArchonRegistry {
+  version: number;
+  updated: string;
+  names: Record<string, string>;  // name → did
 }
+
+// Cache the registry to avoid hitting the API on every login
+let registryCache: ArchonRegistry | null = null;
+let registryCacheTime = 0;
+const REGISTRY_CACHE_TTL = 60 * 1000; // 1 minute
 
 async function lookupArchonName(did: string): Promise<string | null> {
   try {
-    const response = await fetch(`${ARCHON_SOCIAL_API}/profile/${did}`);
-    if (!response.ok) return null;
+    // Check if cache is valid
+    const now = Date.now();
+    if (!registryCache || now - registryCacheTime > REGISTRY_CACHE_TTL) {
+      const response = await fetch(`${ARCHON_SOCIAL_API}/registry`);
+      if (!response.ok) {
+        console.log(`Failed to fetch archon.social registry: ${response.status}`);
+        return null;
+      }
+      registryCache = await response.json();
+      registryCacheTime = now;
+      console.log(`Refreshed archon.social registry: ${Object.keys(registryCache?.names || {}).length} names`);
+    }
     
-    const profile: ArchonProfile = await response.json();
-    return profile.name || null;
+    // Reverse lookup: find name for this DID
+    if (registryCache?.names) {
+      for (const [name, registryDid] of Object.entries(registryCache.names)) {
+        if (registryDid === did) {
+          console.log(`Found archon.social name for ${did}: @${name}`);
+          return name;
+        }
+      }
+    }
+    
+    console.log(`No archon.social name found for ${did}`);
+    return null;
   } catch (error) {
     console.log(`Could not lookup archon.social name for ${did}:`, error);
     return null;
