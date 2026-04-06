@@ -408,6 +408,20 @@ app.post('/api/auth/callback', async (req, res) => {
     
     if (verify.match) {
       req.session.user = { did: verify.responder };
+      
+      // Check if fan needs credential
+      const fan = await db.getFan(verify.responder);
+      if (fan && !fan.credentialDid) {
+        try {
+          const credDid = await issueFanCredential(verify.responder);
+          fan.credentialDid = credDid;
+          fan.credentialIssuedAt = new Date().toISOString();
+          await db.setFan(verify.responder, fan);
+        } catch (err) {
+          console.error('Failed to issue credential:', err);
+        }
+      }
+      
       res.json({ authenticated: true, did: verify.responder });
     } else {
       res.json({ authenticated: false });
