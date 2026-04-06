@@ -1,0 +1,21 @@
+[Unit]
+Description=Album Archon Server - Self-Sovereign Music Publishing
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/archon-album-demo/server
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=album-archon
+
+[Install]
+WantedBy=multi-user.target
