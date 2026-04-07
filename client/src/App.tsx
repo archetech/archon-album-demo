@@ -280,7 +280,7 @@ function Home() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {auth.fan?.accessLevel === 'vip' ? (
                             <Typography variant="body2" sx={{ color: '#c45c3a', fontWeight: 600 }}>
-                                ⭐ {auth.fan?.archonHandle}@archon.social — VIP Member
+                                ⭐ @{auth.fan?.archonHandle}@archon.social — VIP Member
                             </Typography>
                         ) : (
                             <Typography variant="body2" sx={{ color: '#22c55e' }}>
@@ -726,7 +726,7 @@ function ViewCredential() {
                                     </Typography>
                                     {archonHandle && (
                                         <Typography variant="h6" sx={{ color: '#f5f0e8', mb: 1 }}>
-                                            {archonHandle}@archon.social
+                                            @{archonHandle}@archon.social
                                         </Typography>
                                     )}
                                     <Typography variant="body2" sx={{ color: '#a89a88' }}>

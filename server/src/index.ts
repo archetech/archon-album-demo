@@ -314,7 +314,7 @@ async function issueFanCredential(fanDid: string, archonName?: string | null): P
   };
   
   if (archonName) {
-    claims.archonHandle = `@${archonName}`;
+    claims.archonHandle = archonName;
   }
   
   const credential = await keymaster.bindCredential(fanDid, {
@@ -341,7 +341,7 @@ async function upgradeCredentialToVip(credentialDid: string, fanDid: string, arc
   // Update the claims
   const subject = existingCredential.credentialSubject as Record<string, any>;
   subject.accessLevel = 'vip';
-  subject.archonHandle = `@${archonName}`;
+  subject.archonHandle = archonName;
   subject.upgradedAt = new Date().toISOString();
   
   // Update credential (maintains version history)
@@ -466,7 +466,7 @@ app.get('/api/auth/callback', async (req, res) => {
           if (needsCredential) {
             // First-time credential issuance
             if (archonName) {
-              fan.archonHandle = `@${archonName}`;
+              fan.archonHandle = archonName;
               fan.accessLevel = 'vip';
             }
             
@@ -478,7 +478,7 @@ app.get('/api/auth/callback', async (req, res) => {
             // Upgrade existing credential to VIP (maintains version history)
             const upgraded = await upgradeCredentialToVip(fan.credentialDid!, verify.responder, archonName!);
             if (upgraded) {
-              fan.archonHandle = `@${archonName}`;
+              fan.archonHandle = archonName;
               fan.accessLevel = 'vip';
               fan.upgradedAt = new Date().toISOString();
               await db.setFan(verify.responder, fan);
@@ -527,7 +527,7 @@ app.post('/api/auth/callback', async (req, res) => {
           if (needsCredential) {
             // First-time credential issuance
             if (archonName) {
-              fan.archonHandle = `@${archonName}`;
+              fan.archonHandle = archonName;
               fan.accessLevel = 'vip';
             }
             
@@ -539,7 +539,7 @@ app.post('/api/auth/callback', async (req, res) => {
             // Upgrade existing credential to VIP (maintains version history)
             const upgraded = await upgradeCredentialToVip(fan.credentialDid!, verify.responder, archonName!);
             if (upgraded) {
-              fan.archonHandle = `@${archonName}`;
+              fan.archonHandle = archonName;
               fan.accessLevel = 'vip';
               fan.upgradedAt = new Date().toISOString();
               await db.setFan(verify.responder, fan);
